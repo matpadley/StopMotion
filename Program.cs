@@ -12,12 +12,13 @@ namespace ImgConcat
         private const int SlideShowWidth = 1920;
         private const int SlideShowHeight = 1080;
         private const double SlideDurationSeconds = 2.0;
+        private const double CrossfadeDurationSeconds = 0.5;
         private const int FrameRate = 30;
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Image Slideshow Generator");
-            Console.WriteLine("=========================");
+            Console.WriteLine("Image Slideshow Generator with Crossfade");
+            Console.WriteLine("========================================");
 
             string inputDirectory;
 
@@ -110,30 +111,20 @@ namespace ImgConcat
             
             int frameIndex = 0;
             var framesPerSlide = (int)(SlideDurationSeconds * FrameRate);
+            var crossfadeFrames = (int)(CrossfadeDurationSeconds * FrameRate);
 
+            // Load and resize all images first
+            var processedImages = new List<Image>();
             for (int i = 0; i < imageFiles.Length; i++)
             {
                 var imagePath = imageFiles[i];
-                Console.WriteLine($"Processing image {i + 1}/{imageFiles.Length}: {Path.GetFileName(imagePath)}");
+                Console.WriteLine($"Loading image {i + 1}/{imageFiles.Length}: {Path.GetFileName(imagePath)}");
 
                 try
                 {
                     using var image = await Image.LoadAsync(imagePath);
-                    
-                    // Resize image to fit slideshow dimensions while maintaining aspect ratio
                     var resizedImage = ResizeImageToFit(image, SlideShowWidth, SlideShowHeight);
-
-                    // Create frames for this slide (duplicate the same image for the duration)
-                    for (int frame = 0; frame < framesPerSlide; frame++)
-                    {
-                        var frameFileName = $"frame_{frameIndex:D6}.jpg";
-                        var frameePath = Path.Combine(tempDir, frameFileName);
-                        
-                        await resizedImage.SaveAsJpegAsync(frameePath, new JpegEncoder { Quality = 95 });
-                        frameIndex++;
-                    }
-
-                    resizedImage.Dispose();
+                    processedImages.Add(resizedImage);
                 }
                 catch (Exception ex)
                 {
@@ -141,7 +132,69 @@ namespace ImgConcat
                 }
             }
 
-            Console.WriteLine($"Generated {frameIndex} frames.");
+            if (processedImages.Count == 0)
+            {
+                Console.WriteLine("No images were successfully processed.");
+                return;
+            }
+
+            // Generate frames with crossfades
+            for (int i = 0; i < processedImages.Count; i++)
+            {
+                var currentImage = processedImages[i];
+                Console.WriteLine($"Generating frames for image {i + 1}/{processedImages.Count}");
+
+                // For all images except the last one, create frames with crossfade
+                if (i < processedImages.Count - 1)
+                {
+                    var nextImage = processedImages[i + 1];
+                    
+                    // Create normal frames for the main duration
+                    var normalFrames = framesPerSlide - crossfadeFrames;
+                    for (int frame = 0; frame < normalFrames; frame++)
+                    {
+                        var frameFileName = $"frame_{frameIndex:D6}.jpg";
+                        var framePath = Path.Combine(tempDir, frameFileName);
+                        
+                        await currentImage.SaveAsJpegAsync(framePath, new JpegEncoder { Quality = 95 });
+                        frameIndex++;
+                    }
+
+                    // Create crossfade frames
+                    for (int frame = 0; frame < crossfadeFrames; frame++)
+                    {
+                        var frameFileName = $"frame_{frameIndex:D6}.jpg";
+                        var framePath = Path.Combine(tempDir, frameFileName);
+                        
+                        // Calculate blend ratio (0 = current image, 1 = next image)
+                        float blendRatio = (float)frame / (crossfadeFrames - 1);
+                        
+                        using var blendedImage = BlendImages(currentImage, nextImage, blendRatio);
+                        await blendedImage.SaveAsJpegAsync(framePath, new JpegEncoder { Quality = 95 });
+                        frameIndex++;
+                    }
+                }
+                else
+                {
+                    // For the last image, just create normal frames without crossfade
+                    for (int frame = 0; frame < framesPerSlide; frame++)
+                    {
+                        var frameFileName = $"frame_{frameIndex:D6}.jpg";
+                        var framePath = Path.Combine(tempDir, frameFileName);
+                        
+                        await currentImage.SaveAsJpegAsync(framePath, new JpegEncoder { Quality = 95 });
+                        frameIndex++;
+                    }
+                }
+            }
+
+            // Clean up processed images
+            foreach (var image in processedImages)
+            {
+                image.Dispose();
+            }
+
+            Console.WriteLine($"Generated {frameIndex} frames with crossfades.");
         }
 
         static Image ResizeImageToFit(Image sourceImage, int targetWidth, int targetHeight)
@@ -175,6 +228,26 @@ namespace ImgConcat
                 
                 // Draw resized image onto the result
                 ctx.DrawImage(resizedSource, new Point(x, y), 1.0f);
+            });
+
+            return result;
+        }
+
+        static Image BlendImages(Image image1, Image image2, float blendRatio)
+        {
+            // Create a new image for the blended result
+            var result = new Image<SixLabors.ImageSharp.PixelFormats.Rgb24>(SlideShowWidth, SlideShowHeight);
+            
+            result.Mutate(ctx =>
+            {
+                // Fill with black background
+                ctx.BackgroundColor(SixLabors.ImageSharp.Color.Black);
+                
+                // Draw the first image with reduced opacity
+                ctx.DrawImage(image1, new Point(0, 0), 1.0f - blendRatio);
+                
+                // Draw the second image with increasing opacity
+                ctx.DrawImage(image2, new Point(0, 0), blendRatio);
             });
 
             return result;
