@@ -84,3 +84,7 @@ The application will create an MP4 file named `new_slide_show-YYYY-MM-DD.mp4` in
 1. **FFmpeg not found**: Ensure FFmpeg is installed and available in your system PATH
 2. **Permission errors**: Make sure you have read access to the input directory and write access to the output location
 3. **Memory issues**: Large numbers of high-resolution images may require more memory
+
+## Acknowledgments
+
+This application was developed using GitHub Copilot AI assistant for code generation and implementation.

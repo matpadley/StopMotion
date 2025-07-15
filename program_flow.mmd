@@ -1,0 +1,168 @@
+flowchart TD
+    %% Start and Input Validation
+    START([🚀 Application Start])
+    START --> CMDARGS{Command Line Arguments Provided?}
+    
+    %% Command Line Processing
+    CMDARGS -->|Yes| VALIDATEPATH[📁 Validate Directory Path&lt;br/&gt;dotnet run /path/to/images]
+    CMDARGS -->|No| INTERACTIVE[💬 Interactive Mode&lt;br/&gt;Prompt User for Directory]
+    INTERACTIVE --> GETINPUT[⌨️ Get User Input&lt;br/&gt;Directory Path]
+    GETINPUT --> VALIDATEPATH
+    
+    %% Path Validation and Error Handling
+    VALIDATEPATH --> PATHEXISTS{Directory Exists?}
+    PATHEXISTS -->|No| ERRORMSG1[❌ Error: Directory not found&lt;br/&gt;Display error message]
+    ERRORMSG1 --> END1([🛑 Application Exit])
+    PATHEXISTS -->|Yes| READACCESS{Read Access Available?}
+    READACCESS -->|No| ERRORMSG2[❌ Error: Permission denied&lt;br/&gt;Check read permissions]
+    ERRORMSG2 --> END1
+    
+    %% Image Discovery and Filtering
+    READACCESS -->|Yes| SCANDIR[🔍 Scan Directory for Images&lt;br/&gt;Get all files in directory]
+    SCANDIR --> FILTEREXT[🎯 Filter by Extensions&lt;br/&gt;*.jpg, *.jpeg, *.png, *.bmp, *.gif]
+    FILTEREXT --> SORTFILES[📊 Sort Files Alphabetically&lt;br/&gt;Ensure consistent order]
+    
+    %% Image Count Validation
+    SORTFILES --> IMGCOUNT{Images Found > 0?}
+    IMGCOUNT -->|No| ERRORMSG3[❌ Error: No valid images found&lt;br/&gt;Check supported formats]
+    ERRORMSG3 --> END1
+    
+    %% Configuration Setup
+    IMGCOUNT -->|Yes| LOADCONFIG[⚙️ Load Configuration Constants&lt;br/&gt;Width: 1920px&lt;br/&gt;Height: 1080px&lt;br/&gt;Duration: 2.0s&lt;br/&gt;Frame Rate: 30 FPS]
+    
+    %% FFmpeg Validation
+    LOADCONFIG --> CHECKFFMPEG[🎬 Check FFmpeg Installation&lt;br/&gt;Verify FFmpeg in PATH]
+    CHECKFFMPEG --> FFMPEGOK{FFmpeg Available?}
+    FFMPEGOK -->|No| ERRORMSG4[❌ Error: FFmpeg not found&lt;br/&gt;Install FFmpeg first]
+    ERRORMSG4 --> END1
+    FFMPEGOK -->|Yes| FFMPEGCMD[🎥 Build FFmpeg Command&lt;br/&gt;Input: temp frames&lt;br/&gt;Output: MP4 video&lt;br/&gt;Codec: H.264&lt;br/&gt;Frame rate: 30fps]
+    %% --- IGNORE ---
+    
+    %% Temporary Directory Setup
+    FFMPEGOK -->|Yes| CREATETEMP[📂 Create Temporary Directory&lt;br/&gt;For processed frames]
+    CREATETEMP --> INITPROGRESS[📈 Initialize Progress Tracking&lt;br/&gt;Image counter = 0]
+    
+    %% Main Image Processing Loop
+    INITPROGRESS --> PROCESSLOOP{More Images to Process?}
+    PROCESSLOOP -->|No| CLEANUP
+    PROCESSLOOP -->|Yes| LOADIMG[🖼️ Load Next Image&lt;br/&gt;Using SixLabors.ImageSharp]
+    
+    %% Image Loading Error Handling
+    LOADIMG --> IMGVALID{Image Load Successful?}
+    IMGVALID -->|No| SKIPIMG[⚠️ Skip Corrupted Image&lt;br/&gt;Log warning message]
+    SKIPIMG --> NEXTIMG[➡️ Move to Next Image]
+    NEXTIMG --> PROCESSLOOP
+    
+    %% Image Processing Pipeline
+    IMGVALID -->|Yes| GETDIMS[📐 Get Image Dimensions&lt;br/&gt;Original width × height]
+    GETDIMS --> CALCRATIO[🧮 Calculate Aspect Ratio&lt;br/&gt;ratio = width / height]
+    CALCRATIO --> CALCNEWDIMS[📏 Calculate New Dimensions&lt;br/&gt;Fit within 1920×1080&lt;br/&gt;Maintain aspect ratio]
+    
+    %% Canvas Creation and Background
+    CALCNEWDIMS --> CREATECANVAS[🎨 Create Canvas&lt;br/&gt;1920×1080 black background]
+    CREATECANVAS --> RESIZEIMG[🔄 Resize Image&lt;br/&gt;To calculated dimensions&lt;br/&gt;High-quality resampling]
+    
+    %% Image Positioning
+    RESIZEIMG --> CALCPOS[📍 Calculate Center Position&lt;br/&gt;x = (1920 - newWidth) / 2&lt;br/&gt;y = (1080 - newHeight) / 2]
+    CALCPOS --> COMPOSITEIMG[🎭 Composite Image on Canvas&lt;br/&gt;Center image on black background]
+    
+    %% Frame Generation
+    COMPOSITEIMG --> CALCFRAMES[🎞️ Calculate Frame Count&lt;br/&gt;frames = duration × frameRate&lt;br/&gt;Default: 2.0s × 30fps = 60 frames]
+    CALCFRAMES --> GENFRAMES[🎬 Generate Video Frames&lt;br/&gt;Duplicate image for each frame]
+    
+    %% Frame Saving
+    GENFRAMES --> SAVEFRAMES[💾 Save Frames to Temp Directory&lt;br/&gt;frame_001.png, frame_002.png, etc.]
+    SAVEFRAMES --> UPDATEPROGRESS[📊 Update Progress Counter&lt;br/&gt;Display current image number]
+    UPDATEPROGRESS --> PROCESSLOOP
+    
+    %% Video Creation Process
+    CLEANUP --> GENFILENAME[📝 Generate Output Filename&lt;br/&gt;new_slide_show-YYYY-MM-DD.mp4]
+    GENFILENAME --> FFMPEGCMD[🎥 Build FFmpeg Command&lt;br/&gt;Input: temp frames&lt;br/&gt;Output: MP4 video&lt;br/&gt;Codec: H.264&lt;br/&gt;Frame rate: 30fps]
+    
+    %% FFmpeg Execution
+    FFMPEGCMD --> RUNFFMPEG[▶️ Execute FFmpeg Process&lt;br/&gt;Combine frames into video]
+    RUNFFMPEG --> FFMPEGSTATUS{FFmpeg Success?}
+    FFMPEGSTATUS -->|No| ERRORMSG5[❌ FFmpeg Error&lt;br/&gt;Check FFmpeg installation&lt;br/&gt;and permissions]
+    ERRORMSG5 --> CLEANUPEXIT
+    
+    %% Successful Completion
+    FFMPEGSTATUS -->|Yes| VERIFYVIDEO[✅ Verify Video File Created&lt;br/&gt;Check file exists and size &gt; 0]
+    VERIFYVIDEO --> VIDEOSIZE[📊 Display Video File Size&lt;br/&gt;Show creation timestamp]
+    VIDEOSIZE --> CLEANUPEXIT[🧹 Cleanup Process&lt;br/&gt;Delete temporary directory&lt;br/&gt;Remove temp frames]
+    
+    %% Final Output
+    CLEANUPEXIT --> SUCCESS[🎉 Success Message&lt;br/&gt;Video created successfully&lt;br/&gt;Location: output directory]
+    SUCCESS --> END2([✨ Application Complete])
+    
+    %% Dependency and Library Subgraphs
+    subgraph DEPS [📚 Dependencies & Libraries]
+        direction TB
+        IMGSHARP[🖼️ SixLabors.ImageSharp&lt;br/&gt;• Image loading &amp; manipulation&lt;br/&gt;• Format support (JPEG, PNG, BMP, GIF)&lt;br/&gt;• High-quality resampling&lt;br/&gt;• Canvas operations]
+        FFMPEGCORE[🎬 FFMpegCore&lt;br/&gt;• FFmpeg wrapper for .NET&lt;br/&gt;• Video encoding/decoding&lt;br/&gt;• Frame processing&lt;br/&gt;• MP4 output generation]
+        SYSDRAW[🎨 System.Drawing.Common&lt;br/&gt;• Additional image format support&lt;br/&gt;• Legacy compatibility&lt;br/&gt;• Extended graphics operations]
+        NETCORE[⚙️ .NET 8.0 Core&lt;br/&gt;• Cross-platform runtime&lt;br/&gt;• File I/O operations&lt;br/&gt;• Process management&lt;br/&gt;• Memory management]
+    end
+    
+    %% Configuration Subgraph
+    subgraph CONFIG [⚙️ Configuration Settings]
+        direction TB
+        SLIDEWIDTH[📐 SlideShowWidth: 1920px&lt;br/&gt;Standard HD resolution]
+        SLIDEHEIGHT[📐 SlideShowHeight: 1080px&lt;br/&gt;Standard HD resolution]
+        DURATION[⏱️ SlideDurationSeconds: 2.0s&lt;br/&gt;Time per image display]
+        FRAMERATE[🎞️ FrameRate: 30 FPS&lt;br/&gt;Smooth video playback]
+        QUALITY[🎨 Image Quality Settings&lt;br/&gt;• High-quality resampling&lt;br/&gt;• Bicubic interpolation&lt;br/&gt;• Anti-aliasing enabled]
+    end
+    
+    %% Error Handling Subgraph
+    subgraph ERRORHANDLING [🛡️ Error Handling & Recovery]
+        direction TB
+        PATHMISSING[📁 Missing Directory&lt;br/&gt;• Clear error message&lt;br/&gt;• Path validation&lt;br/&gt;• User guidance]
+        IMGCORRUPT[🖼️ Corrupted Images&lt;br/&gt;• Skip invalid files&lt;br/&gt;• Continue processing&lt;br/&gt;• Log warnings]
+        FFMPEGTROUBLE[🎬 FFmpeg Issues&lt;br/&gt;• Installation check&lt;br/&gt;• PATH verification&lt;br/&gt;• Clear error messages]
+        PERMISSIONS[🔒 Permission Problems&lt;br/&gt;• Read access validation&lt;br/&gt;• Write access check&lt;br/&gt;• Helpful error messages]
+        MEMORYISSUES[💾 Memory Management&lt;br/&gt;• Large image handling&lt;br/&gt;• Resource cleanup&lt;br/&gt;• Garbage collection]
+    end
+    
+    %% Output Formats Subgraph
+    subgraph FORMATS [📁 Supported Formats & Output]
+        direction TB
+        INPUTFMTS[📥 Input Formats&lt;br/&gt;• JPEG (.jpg, .jpeg)&lt;br/&gt;• PNG (.png)&lt;br/&gt;• BMP (.bmp)&lt;br/&gt;• GIF (.gif)]
+        OUTPUTFMT[📤 Output Format&lt;br/&gt;• MP4 video&lt;br/&gt;• H.264 codec&lt;br/&gt;• 1920×1080 resolution&lt;br/&gt;• 30 FPS frame rate]
+        NAMING[📝 File Naming&lt;br/&gt;• new_slide_show-YYYY-MM-DD.mp4&lt;br/&gt;• Automatic date inclusion&lt;br/&gt;• Same directory as input]
+    end
+    
+    %% Performance Subgraph
+    subgraph PERFORMANCE [⚡ Performance Features]
+        direction TB
+        ASPECTRATIO[📐 Aspect Ratio Preservation&lt;br/&gt;• Maintains original proportions&lt;br/&gt;• Centers on black background&lt;br/&gt;• No image distortion]
+        MEMOPTIM[💾 Memory Optimization&lt;br/&gt;• Process images one at a time&lt;br/&gt;• Cleanup after each image&lt;br/&gt;• Efficient resource usage]
+        PROGRESS[📊 Progress Tracking&lt;br/&gt;• Real-time progress display&lt;br/&gt;• Current image counter&lt;br/&gt;• User feedback]
+        BATCH[🔄 Batch Processing&lt;br/&gt;• Handles multiple images&lt;br/&gt;• Automatic sorting&lt;br/&gt;• Efficient pipeline]
+    end
+    
+    %% Build and Deployment Subgraph
+    subgraph DEPLOYMENT [🚀 Build & Deployment Options]
+        direction TB
+        DEVRUN[👨‍💻 Development Mode&lt;br/&gt;dotnet run path]
+        BUILDRELEASE[🏗️ Release Build&lt;br/&gt;dotnet build -c Release]
+        EXECUTABLE[📦 Standalone Executable&lt;br/&gt;./bin/Release/net8.0/ImgConcat]
+        CROSSPLATFORM[🌐 Cross-Platform&lt;br/&gt;• Windows support&lt;br/&gt;• macOS support&lt;br/&gt;• Linux support]
+    end
+    
+    %% Style definitions for visual enhancement
+    classDef startEnd fill:#e1f5fe,stroke:#01579b,stroke-width:3px,color:#000
+    classDef process fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef decision fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef error fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    classDef success fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef config fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    classDef library fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+    
+    %% Apply styles
+    class START,END1,END2 startEnd
+    class VALIDATEPATH,SCANDIR,FILTEREXT,LOADIMG,CREATECANVAS,RESIZEIMG,RUNFFMPEG process
+    class CMDARGS,PATHEXISTS,READACCESS,IMGCOUNT,FFMPEGOK,IMGVALID,PROCESSLOOP,FFMPEGSTATUS decision
+    class ERRORMSG1,ERRORMSG2,ERRORMSG3,ERRORMSG4,ERRORMSG5 error
+    class SUCCESS,VERIFYVIDEO success
+    class LOADCONFIG,INITPROGRESS config
+    class IMGSHARP,FFMPEGCORE,SYSDRAW,NETCORE library

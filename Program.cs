@@ -11,25 +11,86 @@ namespace ImgConcat
     {
         private const int SlideShowWidth = 1920;
         private const int SlideShowHeight = 1080;
-        private const double SlideDurationSeconds = 2.0;
-        private const double CrossfadeDurationSeconds = 0.5;
         private const int FrameRate = 30;
 
         static async Task Main(string[] args)
         {
             Console.WriteLine("Image Slideshow Generator with Crossfade");
             Console.WriteLine("========================================");
+            Console.WriteLine("Usage: ImgConcat <directory> [slide_duration] [crossfade_duration]");
+            Console.WriteLine("  directory: Path to directory containing images");
+            Console.WriteLine("  slide_duration: Duration of each slide in seconds (default: 2.0)");
+            Console.WriteLine("  crossfade_duration: Duration of crossfade transition in seconds (default: 0.5)");
+            Console.WriteLine();
 
             string inputDirectory;
+            double slideDurationSeconds = 2.0; // Default value
+            double crossfadeDurationSeconds = 0.5; // Default value
 
             if (args.Length > 0)
             {
                 inputDirectory = args[0];
+                
+                // Parse slide duration if provided
+                if (args.Length > 1)
+                {
+                    if (!double.TryParse(args[1], out slideDurationSeconds) || slideDurationSeconds <= 0)
+                    {
+                        Console.WriteLine("Error: Invalid slide duration. Using default value of 2.0 seconds.");
+                        slideDurationSeconds = 2.0;
+                    }
+                }
+                
+                // Parse crossfade duration if provided
+                if (args.Length > 2)
+                {
+                    if (!double.TryParse(args[2], out crossfadeDurationSeconds) || crossfadeDurationSeconds < 0)
+                    {
+                        Console.WriteLine("Error: Invalid crossfade duration. Using default value of 0.5 seconds.");
+                        crossfadeDurationSeconds = 0.5;
+                    }
+                    
+                    // Ensure crossfade duration is not longer than slide duration
+                    if (crossfadeDurationSeconds >= slideDurationSeconds)
+                    {
+                        Console.WriteLine("Warning: Crossfade duration cannot be greater than or equal to slide duration. Adjusting crossfade to half of slide duration.");
+                        crossfadeDurationSeconds = slideDurationSeconds / 2;
+                    }
+                }
             }
             else
             {
                 Console.Write("Enter the directory path containing images: ");
                 inputDirectory = Console.ReadLine() ?? string.Empty;
+                
+                Console.Write($"Enter slide duration in seconds (default: {slideDurationSeconds}): ");
+                var slideDurationInput = Console.ReadLine();
+                if (!string.IsNullOrWhiteSpace(slideDurationInput))
+                {
+                    if (!double.TryParse(slideDurationInput, out slideDurationSeconds) || slideDurationSeconds <= 0)
+                    {
+                        Console.WriteLine("Invalid slide duration. Using default value of 2.0 seconds.");
+                        slideDurationSeconds = 2.0;
+                    }
+                }
+                
+                Console.Write($"Enter crossfade duration in seconds (default: {crossfadeDurationSeconds}): ");
+                var crossfadeDurationInput = Console.ReadLine();
+                if (!string.IsNullOrWhiteSpace(crossfadeDurationInput))
+                {
+                    if (!double.TryParse(crossfadeDurationInput, out crossfadeDurationSeconds) || crossfadeDurationSeconds < 0)
+                    {
+                        Console.WriteLine("Invalid crossfade duration. Using default value of 0.5 seconds.");
+                        crossfadeDurationSeconds = 0.5;
+                    }
+                    
+                    // Ensure crossfade duration is not longer than slide duration
+                    if (crossfadeDurationSeconds >= slideDurationSeconds)
+                    {
+                        Console.WriteLine("Warning: Crossfade duration cannot be greater than or equal to slide duration. Adjusting crossfade to half of slide duration.");
+                        crossfadeDurationSeconds = slideDurationSeconds / 2;
+                    }
+                }
             }
 
             if (string.IsNullOrWhiteSpace(inputDirectory))
@@ -44,9 +105,14 @@ namespace ImgConcat
                 return;
             }
 
+            Console.WriteLine($"Settings:");
+            Console.WriteLine($"  Slide Duration: {slideDurationSeconds} seconds");
+            Console.WriteLine($"  Crossfade Duration: {crossfadeDurationSeconds} seconds");
+            Console.WriteLine();
+
             try
             {
-                await CreateSlideshow(inputDirectory);
+                await CreateSlideshow(inputDirectory, slideDurationSeconds, crossfadeDurationSeconds);
             }
             catch (Exception ex)
             {
@@ -54,7 +120,7 @@ namespace ImgConcat
             }
         }
 
-        static async Task CreateSlideshow(string inputDirectory)
+        static async Task CreateSlideshow(string inputDirectory, double slideDurationSeconds, double crossfadeDurationSeconds)
         {
             Console.WriteLine($"Processing images from: {inputDirectory}");
 
@@ -84,7 +150,7 @@ namespace ImgConcat
             try
             {
                 // Process each image and create frames
-                await ProcessImagesAsync(imageFiles, tempDir);
+                await ProcessImagesAsync(imageFiles, tempDir, slideDurationSeconds, crossfadeDurationSeconds);
 
                 // Generate output filename with today's date
                 var todayDate = DateTime.Now.ToString("yyyy-MM-dd");
@@ -105,13 +171,13 @@ namespace ImgConcat
             }
         }
 
-        static async Task ProcessImagesAsync(string[] imageFiles, string tempDir)
+        static async Task ProcessImagesAsync(string[] imageFiles, string tempDir, double slideDurationSeconds, double crossfadeDurationSeconds)
         {
             Console.WriteLine("Processing images...");
             
             int frameIndex = 0;
-            var framesPerSlide = (int)(SlideDurationSeconds * FrameRate);
-            var crossfadeFrames = (int)(CrossfadeDurationSeconds * FrameRate);
+            var framesPerSlide = (int)(slideDurationSeconds * FrameRate);
+            var crossfadeFrames = (int)(crossfadeDurationSeconds * FrameRate);
 
             // Load and resize all images first
             var processedImages = new List<Image>();
