@@ -194,6 +194,11 @@ namespace ImgConcat
             double avgB = sumB / total;
             double avgGray = (avgR + avgG + avgB) / 3.0;
 
+            // Prevent division by zero by ensuring minimum values
+            double safeAvgR = Math.Max(avgR, 1.0);
+            double safeAvgG = Math.Max(avgG, 1.0);
+            double safeAvgB = Math.Max(avgB, 1.0);
+
             image.ProcessPixelRows(accessor =>
             {
                 for (int y = 0; y < height; y++)
