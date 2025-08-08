@@ -193,9 +193,9 @@ namespace ImgConcat
                     for (int x = 0; x < width; x++)
                     {
                         var pixel = row[x];
-                        pixel.R = (byte)Math.Clamp(pixel.R * avgGray / avgR, 0, 255);
-                        pixel.G = (byte)Math.Clamp(pixel.G * avgGray / avgG, 0, 255);
-                        pixel.B = (byte)Math.Clamp(pixel.B * avgGray / avgB, 0, 255);
+                        pixel.R = (byte)Math.Clamp(pixel.R * avgGray / safeAvgR, 0, 255);
+                        pixel.G = (byte)Math.Clamp(pixel.G * avgGray / safeAvgG, 0, 255);
+                        pixel.B = (byte)Math.Clamp(pixel.B * avgGray / safeAvgB, 0, 255);
                         row[x] = pixel;
                     }
                 }
