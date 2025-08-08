@@ -25,12 +25,13 @@ namespace ImgConcat.Tests
         {
             var service = new ImageProcessingService(NullLogger<ImageProcessingService>.Instance);
             using var input = CreateSolidColorImage(100, 100, new Rgb24(200, 100, 50));
-            using var balanced = service.GetType()
-                .GetMethod("ApplyGrayWorldColorBalance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                .Invoke(service, new object[] { input }) as Image;
-            Assert.NotNull(balanced);
-            Assert.AreEqual(input.Width, balanced.Width);
-            Assert.AreEqual(input.Height, balanced.Height);
+            var method = service.GetType()
+                .GetMethod("ApplyGrayWorldColorBalance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.That(method, Is.Not.Null, "ApplyGrayWorldColorBalance method should exist");
+            using var balanced = method!.Invoke(service, new object[] { input }) as Image;
+            Assert.That(balanced, Is.Not.Null);
+            Assert.That(balanced!.Width, Is.EqualTo(input.Width));
+            Assert.That(balanced.Height, Is.EqualTo(input.Height));
         }
 
         [Test]
@@ -39,10 +40,11 @@ namespace ImgConcat.Tests
             var service = new ImageProcessingService(NullLogger<ImageProcessingService>.Instance);
             using var input = CreateSolidColorImage(300, 150, new Rgb24(100, 200, 50));
             var method = service.GetType().GetMethod("ResizeImageToFit", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            using var resized = method.Invoke(service, new object[] { input, 1920, 1080 }) as Image;
-            Assert.NotNull(resized);
-            Assert.AreEqual(1920, resized.Width);
-            Assert.AreEqual(1080, resized.Height);
+            Assert.That(method, Is.Not.Null, "ResizeImageToFit method should exist");
+            using var resized = method!.Invoke(service, new object[] { input, 1920, 1080 }) as Image;
+            Assert.That(resized, Is.Not.Null);
+            Assert.That(resized!.Width, Is.EqualTo(1920));
+            Assert.That(resized.Height, Is.EqualTo(1080));
         }
 
         [Test]
@@ -52,10 +54,11 @@ namespace ImgConcat.Tests
             using var imgA = CreateSolidColorImage(200, 200, new Rgb24(255, 0, 0));
             using var imgB = CreateSolidColorImage(200, 200, new Rgb24(0, 0, 255));
             var method = service.GetType().GetMethod("BlendImages", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            using var blended = method.Invoke(service, new object[] { imgA, imgB, 0.5f }) as Image;
-            Assert.NotNull(blended);
-            Assert.AreEqual(imgA.Width, blended.Width);
-            Assert.AreEqual(imgA.Height, blended.Height);
+            Assert.That(method, Is.Not.Null, "BlendImages method should exist");
+            using var blended = method!.Invoke(service, new object[] { imgA, imgB, 0.5f }) as Image;
+            Assert.That(blended, Is.Not.Null);
+            Assert.That(blended!.Width, Is.EqualTo(imgA.Width));
+            Assert.That(blended.Height, Is.EqualTo(imgA.Height));
         }
     }
 }
