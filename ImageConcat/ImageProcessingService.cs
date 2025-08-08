@@ -129,7 +129,16 @@ namespace ImgConcat
                 {
                     var frameFileName = $"frame_{frameIndex + frame:D6}.jpg";
                     var framePath = Path.Combine(tempDir, frameFileName);
-                    float blendRatio = crossfadeFrames == 1 ? 1.0f : (float)frame / (crossfadeFrames - 1);
+                    // If crossfadeFrames == 1, blendRatio is 1.0 (fully next image). Otherwise, blend from 0.0 to 1.0 across frames.
+                    float blendRatio;
+                    if (crossfadeFrames == 1)
+                    {
+                        blendRatio = 1.0f;
+                    }
+                    else
+                    {
+                        blendRatio = (float)frame / (crossfadeFrames - 1);
+                    }
                     using var blendedImage = BlendImages(prevResized, resizedImage, blendRatio);
                     await blendedImage.SaveAsJpegAsync(framePath, new JpegEncoder { Quality = 95 }, cancellationToken);
                 }, cancellationToken));
