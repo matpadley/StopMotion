@@ -23,6 +23,7 @@ if command -v convert &> /dev/null; then
     echo "Running slideshow generator..."
     
     # Run the slideshow generator
+    cd ImageConcat
     dotnet run test_images
     
     echo "Check for the generated MP4 file in the test_images directory!"
