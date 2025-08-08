@@ -2,7 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgConcat", "ImgConcat.csproj", "{CFEF7BDC-0877-FF78-D81B-700C04EF4C60}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgConcat", "ImageConcat/ImgConcat.csproj", "{CFEF7BDC-0877-FF78-D81B-700C04EF4C60}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgConcat.Tests", "ImgConcat.Tests\ImgConcat.Tests.csproj", "{C8F2A120-A26A-48E2-946A-91FE20099F55}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +16,10 @@ Global
 		{CFEF7BDC-0877-FF78-D81B-700C04EF4C60}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CFEF7BDC-0877-FF78-D81B-700C04EF4C60}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CFEF7BDC-0877-FF78-D81B-700C04EF4C60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8F2A120-A26A-48E2-946A-91FE20099F55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8F2A120-A26A-48E2-946A-91FE20099F55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8F2A120-A26A-48E2-946A-91FE20099F55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8F2A120-A26A-48E2-946A-91FE20099F55}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

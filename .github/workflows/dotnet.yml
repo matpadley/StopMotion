@@ -1,0 +1,44 @@
+name: .NET Build & Test
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          9.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Install FFmpeg (for tests that need it)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Restore
+      run: dotnet restore ImgConcat.sln
+
+    - name: Build
+      run: dotnet build ImgConcat.sln --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test ImgConcat.Tests/ImgConcat.Tests.csproj --configuration Release --no-build --verbosity normal
