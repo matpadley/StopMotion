@@ -28,14 +28,45 @@ namespace ImgConcat
 
             logger.LogInformation("Image Slideshow Generator with Crossfade");
             logger.LogInformation("========================================");
-            logger.LogInformation("Usage: ImgConcat <directory> [slide_duration] [crossfade_duration]");
+            logger.LogInformation("Usage: ImgConcat <directory> [slide_duration] [crossfade_duration] [--format video|fcpxml|both]");
             logger.LogInformation("  directory: Path to directory containing images");
             logger.LogInformation("  slide_duration: Duration of each slide in seconds (default: 2.0)");
             logger.LogInformation("  crossfade_duration: Duration of crossfade transition in seconds (default: 0.5)");
+            logger.LogInformation("  --format: video (MP4, default), fcpxml (Final Cut Pro project) or both");
 
             string inputDirectory;
             double slideDurationSeconds = 2.0; // Default value
             double crossfadeDurationSeconds = 0.5; // Default value
+            var outputFormat = OutputFormat.Video; // Default value
+
+            // Pull out the optional --format flag so the remaining arguments stay positional
+            var positionalArgs = new List<string>();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] is "--format" or "-f")
+                {
+                    if (i + 1 >= args.Length || !OutputFormatParser.TryParse(args[i + 1], out outputFormat))
+                    {
+                        logger.LogError("Invalid or missing value for {Flag}. Expected video, fcpxml or both.", args[i]);
+                        return 1;
+                    }
+                    i++;
+                }
+                else if (args[i].StartsWith("--format=", StringComparison.Ordinal))
+                {
+                    var value = args[i]["--format=".Length..];
+                    if (!OutputFormatParser.TryParse(value, out outputFormat))
+                    {
+                        logger.LogError("Invalid format '{Provided}'. Expected video, fcpxml or both.", value);
+                        return 1;
+                    }
+                }
+                else
+                {
+                    positionalArgs.Add(args[i]);
+                }
+            }
+            args = positionalArgs.ToArray();
 
             if (args.Length > 0)
             {
@@ -101,6 +132,14 @@ namespace ImgConcat
                         crossfadeDurationSeconds = slideDurationSeconds / 2;
                     }
                 }
+
+                Console.Write("Output format - video, fcpxml or both (default: video): ");
+                var formatInput = Console.ReadLine();
+                if (!string.IsNullOrWhiteSpace(formatInput) && !OutputFormatParser.TryParse(formatInput, out outputFormat))
+                {
+                    logger.LogWarning("Invalid output format '{Provided}'. Using video.", formatInput);
+                    outputFormat = OutputFormat.Video;
+                }
             }
 
             if (string.IsNullOrWhiteSpace(inputDirectory))
@@ -115,7 +154,7 @@ namespace ImgConcat
                 return 1;
             }
 
-            logger.LogInformation("Settings: Slide Duration: {SlideDuration}s, Crossfade Duration: {CrossfadeDuration}s", slideDurationSeconds, crossfadeDurationSeconds);
+            logger.LogInformation("Settings: Slide Duration: {SlideDuration}s, Crossfade Duration: {CrossfadeDuration}s, Output: {OutputFormat}", slideDurationSeconds, crossfadeDurationSeconds, outputFormat);
 
             // Graceful cancellation (Ctrl+C)
             using var cts = new CancellationTokenSource();
@@ -129,7 +168,7 @@ namespace ImgConcat
             var imageService = host.Services.GetRequiredService<IImageProcessingService>();
             try
             {
-                await imageService.CreateSlideshowAsync(inputDirectory, slideDurationSeconds, crossfadeDurationSeconds, cts.Token);
+                await imageService.CreateSlideshowAsync(inputDirectory, slideDurationSeconds, crossfadeDurationSeconds, outputFormat, cts.Token);
                 logger.LogInformation("Completed successfully.");
                 return 0;
             }

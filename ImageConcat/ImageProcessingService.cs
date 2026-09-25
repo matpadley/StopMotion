@@ -18,7 +18,7 @@ namespace ImgConcat
             _logger = logger;
         }
 
-        public async Task CreateSlideshowAsync(string inputDirectory, double slideDurationSeconds, double crossfadeDurationSeconds, CancellationToken cancellationToken = default)
+        public async Task CreateSlideshowAsync(string inputDirectory, double slideDurationSeconds, double crossfadeDurationSeconds, OutputFormat outputFormat = OutputFormat.Video, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Processing images from: {InputDirectory}", inputDirectory);
 
@@ -36,6 +36,22 @@ namespace ImgConcat
 
             _logger.LogInformation("Found {Count} image(s).", imageFiles.Length);
 
+            var todayDate = DateTime.Now.ToString("yyyy-MM-dd");
+            var outputName = $"new_slide_show-{todayDate}";
+
+            if (outputFormat.IncludesVideo())
+            {
+                await CreateVideoAsync(imageFiles, inputDirectory, outputName, slideDurationSeconds, crossfadeDurationSeconds, cancellationToken);
+            }
+
+            if (outputFormat.IncludesFinalCutPro())
+            {
+                await CreateFinalCutProProjectAsync(imageFiles, inputDirectory, outputName, slideDurationSeconds, crossfadeDurationSeconds, cancellationToken);
+            }
+        }
+
+        private async Task CreateVideoAsync(string[] imageFiles, string outputDirectory, string outputName, double slideDurationSeconds, double crossfadeDurationSeconds, CancellationToken cancellationToken)
+        {
             var tempDir = Path.Combine(Path.GetTempPath(), "slideshow_frames");
             if (Directory.Exists(tempDir))
             {
@@ -48,8 +64,7 @@ namespace ImgConcat
                 await ProcessImagesAsync(imageFiles, tempDir, slideDurationSeconds, crossfadeDurationSeconds, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var todayDate = DateTime.Now.ToString("yyyy-MM-dd");
-                var outputPath = Path.Combine(inputDirectory, $"new_slide_show-{todayDate}.mp4");
+                var outputPath = Path.Combine(outputDirectory, $"{outputName}.mp4");
                 await CreateVideoFromFrames(tempDir, outputPath, cancellationToken);
                 _logger.LogInformation("Slideshow created successfully: {OutputPath}", outputPath);
             }
@@ -67,6 +82,60 @@ namespace ImgConcat
                     _logger.LogWarning(ex, "Failed to clean up temporary directory {TempDir}", tempDir);
                 }
             }
+        }
+
+        /// <summary>
+        /// Writes colour-balanced copies of the stills to "&lt;name&gt; Media" and an FCPXML project
+        /// that places them on a 1920x1080 timeline with Cross Dissolves matching the video output.
+        /// Import the .fcpxml via File ▸ Import ▸ XML… in Final Cut Pro.
+        /// </summary>
+        private async Task CreateFinalCutProProjectAsync(string[] imageFiles, string outputDirectory, string outputName, double slideDurationSeconds, double crossfadeDurationSeconds, CancellationToken cancellationToken)
+        {
+            var mediaDir = Path.Combine(outputDirectory, $"{outputName} Media");
+            Directory.CreateDirectory(mediaDir);
+
+            var stills = new List<FcpxmlStill>(imageFiles.Length);
+            for (int i = 0; i < imageFiles.Length; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var imagePath = imageFiles[i];
+                _logger.LogInformation("Preparing still {Current}/{Total} for Final Cut Pro: {File}", i + 1, imageFiles.Length, Path.GetFileName(imagePath));
+                try
+                {
+                    using var image = await Image.LoadAsync(imagePath, cancellationToken);
+                    image.Mutate(ctx => ctx.AutoOrient());
+                    using var balancedImage = ApplyGrayWorldColorBalance(image);
+                    var stillPath = Path.Combine(mediaDir, $"{i + 1:D4}_{Path.GetFileNameWithoutExtension(imagePath)}.jpg");
+                    await balancedImage.SaveAsJpegAsync(stillPath, new JpegEncoder { Quality = 95 }, cancellationToken);
+                    stills.Add(new FcpxmlStill(stillPath, balancedImage.Width, balancedImage.Height));
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not process image {ImagePath}", imagePath);
+                }
+            }
+
+            if (stills.Count == 0)
+            {
+                throw new InvalidOperationException("No images could be prepared for the Final Cut Pro project.");
+            }
+
+            var options = new FcpxmlOptions(
+                ProjectName: outputName,
+                Width: SlideShowWidth,
+                Height: SlideShowHeight,
+                FrameRate: FrameRate,
+                FramesPerSlide: Math.Max(1, (int)(slideDurationSeconds * FrameRate)),
+                CrossfadeFrames: (int)(crossfadeDurationSeconds * FrameRate));
+
+            var projectPath = Path.Combine(outputDirectory, $"{outputName}.fcpxml");
+            await File.WriteAllTextAsync(projectPath, FcpxmlBuilder.Build(stills, options), cancellationToken);
+            _logger.LogInformation("Final Cut Pro project created: {ProjectPath} (media in {MediaDir})", projectPath, mediaDir);
         }
 
         private async Task ProcessImagesAsync(string[] imageFiles, string tempDir, double slideDurationSeconds, double crossfadeDurationSeconds, CancellationToken cancellationToken)
