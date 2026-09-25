@@ -1,10 +1,15 @@
 # AI Coding Agent Guide for ImgConcat
 
-Purpose: Help you quickly contribute to a .NET 8 console app that builds MP4 slideshows from images with crossfade transitions.
+Purpose: Help you quickly contribute to StopMotion, which turns a folder of images into an MP4 and/or a Final Cut Pro (FCPXML) project with crossfade transitions. There are two front ends:
+- `ImageConcat/` – .NET 10 console app (this guide's main subject)
+- `StopMotionApp/` – SwiftUI macOS app (Swift package: `StopMotionKit` library + `StopMotion` app). Build with `swift build` on macOS 14+; `scripts/build-app.sh` makes a `.app`.
+
+Both front ends produce the same FCPXML timeline (`FcpxmlBuilder.cs` / `FCPXMLBuilder.swift`): FCPXML 1.10, stills on the spine for `framesPerSlide` frames each, Cross Dissolve (`FxPlug:4731E73A-8DAC-4113-9A30-AE85B1761265`) centred on each cut. Keep them in sync.
 
 Big picture architecture
-- Entry point: `ImageConcat/Program.cs` uses .NET Generic Host (DI + console logging) and parses CLI args: `<directory> [slide_duration] [crossfade_duration]`.
-- Service boundary: `IImageProcessingService` with one async method `CreateSlideshowAsync(...)` implemented by `ImageProcessingService`.
+- Entry point: `ImageConcat/Program.cs` uses .NET Generic Host (DI + console logging) and parses CLI args: `<directory> [slide_duration] [crossfade_duration] [--format video|fcpxml|both]`.
+- Service boundary: `IImageProcessingService` with one async method `CreateSlideshowAsync(..., OutputFormat, ...)` implemented by `ImageProcessingService`.
+- Final Cut Pro output: colour-balanced JPEGs are written to `<name> Media/` and `FcpxmlBuilder.Build` writes `<name>.fcpxml`.
 - Processing pipeline (in `ImageProcessingService`):
   1) Load images from input dir (extensions: .jpg, .jpeg, .png, .bmp, .gif)
   2) Apply gray-world color balance (clone, per-pixel adjust) → `ApplyGrayWorldColorBalance`

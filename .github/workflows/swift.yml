@@ -1,0 +1,33 @@
+name: SwiftUI App Build
+
+on:
+  push:
+    branches: [ "**" ]
+    paths:
+      - "StopMotionApp/**"
+      - ".github/workflows/swift.yml"
+  pull_request:
+    branches: [ "**" ]
+    paths:
+      - "StopMotionApp/**"
+      - ".github/workflows/swift.yml"
+
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: StopMotionApp
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Show toolchain
+      run: swift --version
+
+    - name: Build
+      run: swift build
+
+    - name: Build app bundle
+      run: scripts/build-app.sh
