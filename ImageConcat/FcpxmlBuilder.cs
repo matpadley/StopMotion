@@ -2,19 +2,6 @@ using System.Xml.Linq;
 
 namespace ImgConcat
 {
-    /// <summary>A still image placed on the Final Cut Pro timeline.</summary>
-    public record FcpxmlStill(string Path, int Width, int Height);
-
-    /// <summary>Timeline settings for an FCPXML export. All durations are in whole frames.</summary>
-    public record FcpxmlOptions(
-        string ProjectName,
-        int Width,
-        int Height,
-        int FrameRate,
-        int FramesPerSlide,
-        int CrossfadeFrames,
-        string EventName = "StopMotion");
-
     /// <summary>
     /// Builds an FCPXML 1.10 document (Final Cut Pro 10.6 and later) that places each still
     /// on the primary storyline for <see cref="FcpxmlOptions.FramesPerSlide"/> frames, with a
@@ -157,10 +144,5 @@ namespace ImgConcat
             (1280, 720) => $"FFVideoFormat720p{fps}",
             _ => $"FFVideoFormat{width}x{height}p{fps}"
         };
-
-        private sealed class Utf8StringWriter : StringWriter
-        {
-            public override System.Text.Encoding Encoding => System.Text.Encoding.UTF8;
-        }
     }
 }
