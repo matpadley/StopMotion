@@ -30,7 +30,6 @@ The app lives in [`StopMotionApp/`](StopMotionApp) as a Swift package:
 
 - `StopMotionKit` — Core Image + AVFoundation rendering and the FCPXML writer
 - `StopMotion` — the SwiftUI app
-- `StopMotionKitTests` — unit tests plus an end-to-end export test
 
 ### Run it
 

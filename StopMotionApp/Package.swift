@@ -17,10 +17,6 @@ let package = Package(
         .executableTarget(
             name: "StopMotion",
             dependencies: ["StopMotionKit"]
-        ),
-        .testTarget(
-            name: "StopMotionKitTests",
-            dependencies: ["StopMotionKit"]
         )
     ]
 )

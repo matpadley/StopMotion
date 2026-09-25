@@ -2,7 +2,7 @@
 
 Purpose: Help you quickly contribute to StopMotion, which turns a folder of images into an MP4 and/or a Final Cut Pro (FCPXML) project with crossfade transitions. There are two front ends:
 - `ImageConcat/` – .NET 8 console app (this guide's main subject)
-- `StopMotionApp/` – SwiftUI macOS app (Swift package: `StopMotionKit` library + `StopMotion` app + tests). Build/test with `swift build` / `swift test` on macOS 14+; `scripts/build-app.sh` makes a `.app`.
+- `StopMotionApp/` – SwiftUI macOS app (Swift package: `StopMotionKit` library + `StopMotion` app). Build with `swift build` on macOS 14+; `scripts/build-app.sh` makes a `.app`.
 
 Both front ends produce the same FCPXML timeline (`FcpxmlBuilder.cs` / `FCPXMLBuilder.swift`): FCPXML 1.10, stills on the spine for `framesPerSlide` frames each, Cross Dissolve (`FxPlug:4731E73A-8DAC-4113-9A30-AE85B1761265`) centred on each cut. Keep them in sync.
 

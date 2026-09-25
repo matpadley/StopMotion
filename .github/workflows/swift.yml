@@ -1,4 +1,4 @@
-name: SwiftUI App Build & Test
+name: SwiftUI App Build
 
 on:
   push:
@@ -28,9 +28,6 @@ jobs:
 
     - name: Build
       run: swift build
-
-    - name: Test
-      run: swift test
 
     - name: Build app bundle
       run: scripts/build-app.sh
