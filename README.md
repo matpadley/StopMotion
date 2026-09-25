@@ -17,7 +17,7 @@ There are two ways to use it:
 Choosing the Final Cut Pro output writes:
 
 - `<name>.fcpxml` — an FCPXML 1.10 project (Final Cut Pro 10.6 or later) with every image on the
-  primary storyline for the chosen hold time and a **Cross Dissolve** centred on each cut.
+  primary storyline for the chosen hold time and, optionally, a **Cross Dissolve** centred on each cut.
 - `<name> Media/` — colour-balanced JPEG copies of your images at full resolution, which the
   project points at. (In the app you can turn colour balance off to reference the originals instead.)
 
@@ -50,7 +50,8 @@ scripts/build-app.sh --open
 1. **Open Folder…** (⌘O) or drag a folder / a selection of images onto the window. Frames are
    ordered like Finder sorts names, so `IMG_2` comes before `IMG_10`. Right-click a frame to leave it out.
 2. Pick what to create: **Video**, **Final Cut Pro Project**, or both.
-3. Set the timing — frame rate, how many frames to hold each image and the crossfade length — or
+3. Set the timing — frame rate, how many frames to hold each image, and whether to cross dissolve
+   between images (and for how long) — or
    use **Presets ▸ Stop motion** (24 fps, each image held 2 frames, hard cuts) or **Slideshow**.
    The preview plays the frames at exactly that timing.
 4. Choose resolution (720p, 1080p, 4K), codec and whether to auto colour-balance.
@@ -112,6 +113,7 @@ dotnet run "/path/to/images" --format both
 ```
 
 `--format` can appear anywhere in the arguments and accepts `video`, `fcpxml` or `both`.
+Add `--no-crossfade` for hard cuts between images (the same as a crossfade duration of `0`).
 FFmpeg is only needed when a video is produced.
 
 #### Method 3: Build and Run Executable

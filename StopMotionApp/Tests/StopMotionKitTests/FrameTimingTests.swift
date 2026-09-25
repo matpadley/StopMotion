@@ -37,6 +37,24 @@ final class FrameTimingTests: XCTestCase {
         XCTAssertEqual(timing.blendRatio(crossfadeFrame: 4), 1)
     }
 
+    func testCrossfadeCanBeTurnedOff() {
+        var settings = ExportSettings()
+        settings.crossfadeSeconds = 0.5
+        XCTAssertEqual(settings.timing.crossfadeFrames, 15)
+        settings.crossfadeEnabled = false
+        XCTAssertEqual(settings.timing.crossfadeFrames, 0)
+        XCTAssertEqual(settings.crossfadeSeconds, 0.5, "the length is kept for when it's turned back on")
+    }
+
+    func testSettingsSavedWithoutCrossfadeFlagStillDecode() throws {
+        let json = #"{"outputKind":"finalCutPro","frameRate":25,"crossfadeSeconds":0.2}"#
+        let settings = try JSONDecoder().decode(ExportSettings.self, from: Data(json.utf8))
+        XCTAssertEqual(settings.outputKind, .finalCutPro)
+        XCTAssertEqual(settings.frameRate, 25)
+        XCTAssertTrue(settings.crossfadeEnabled)
+        XCTAssertEqual(settings.timing.crossfadeFrames, 5)
+    }
+
     func testFinalCutProFrameRatesAreRestricted() {
         XCTAssertFalse(ExportSettings.frameRates(for: .finalCutPro).contains(12))
         XCTAssertFalse(ExportSettings.frameRates(for: .both).contains(15))

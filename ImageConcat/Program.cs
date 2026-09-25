@@ -28,16 +28,18 @@ namespace ImgConcat
 
             logger.LogInformation("Image Slideshow Generator with Crossfade");
             logger.LogInformation("========================================");
-            logger.LogInformation("Usage: ImgConcat <directory> [slide_duration] [crossfade_duration] [--format video|fcpxml|both]");
+            logger.LogInformation("Usage: ImgConcat <directory> [slide_duration] [crossfade_duration] [--format video|fcpxml|both] [--no-crossfade]");
             logger.LogInformation("  directory: Path to directory containing images");
             logger.LogInformation("  slide_duration: Duration of each slide in seconds (default: 2.0)");
             logger.LogInformation("  crossfade_duration: Duration of crossfade transition in seconds (default: 0.5)");
             logger.LogInformation("  --format: video (MP4, default), fcpxml (Final Cut Pro project) or both");
+            logger.LogInformation("  --no-crossfade: hard cuts between images instead of a cross dissolve");
 
             string inputDirectory;
             double slideDurationSeconds = 2.0; // Default value
             double crossfadeDurationSeconds = 0.5; // Default value
             var outputFormat = OutputFormat.Video; // Default value
+            var crossfadeEnabled = true;
 
             // Pull out the optional --format flag so the remaining arguments stay positional
             var positionalArgs = new List<string>();
@@ -51,6 +53,10 @@ namespace ImgConcat
                         return 1;
                     }
                     i++;
+                }
+                else if (args[i] == "--no-crossfade")
+                {
+                    crossfadeEnabled = false;
                 }
                 else if (args[i].StartsWith("--format=", StringComparison.Ordinal))
                 {
@@ -115,7 +121,7 @@ namespace ImgConcat
                     }
                 }
 
-                Console.Write($"Enter crossfade duration in seconds (default: {crossfadeDurationSeconds}): ");
+                Console.Write($"Enter crossfade duration in seconds, 0 for none (default: {crossfadeDurationSeconds}): ");
                 var crossfadeDurationInput = Console.ReadLine();
                 if (!string.IsNullOrWhiteSpace(crossfadeDurationInput))
                 {
@@ -140,6 +146,11 @@ namespace ImgConcat
                     logger.LogWarning("Invalid output format '{Provided}'. Using video.", formatInput);
                     outputFormat = OutputFormat.Video;
                 }
+            }
+
+            if (!crossfadeEnabled)
+            {
+                crossfadeDurationSeconds = 0;
             }
 
             if (string.IsNullOrWhiteSpace(inputDirectory))

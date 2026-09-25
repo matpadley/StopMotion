@@ -180,7 +180,7 @@ final class ExportModel: ObservableObject {
         var preset = settings
         preset.frameRate = 24
         preset.secondsPerImage = 2.0 / 24.0 // "on twos": 12 drawings a second
-        preset.crossfadeSeconds = 0
+        preset.crossfadeEnabled = false
         settings = preset
     }
 
@@ -188,6 +188,7 @@ final class ExportModel: ObservableObject {
         var preset = settings
         preset.frameRate = 30
         preset.secondsPerImage = 2.0
+        preset.crossfadeEnabled = true
         preset.crossfadeSeconds = 0.5
         settings = preset
     }

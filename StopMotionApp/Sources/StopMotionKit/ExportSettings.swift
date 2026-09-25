@@ -90,7 +90,9 @@ public struct ExportSettings: Codable, Equatable, Sendable {
     public var frameRate: Int = 30
     /// How long each image is on screen, in seconds (includes the crossfade into the next image).
     public var secondsPerImage: Double = 2.0
-    /// Length of the crossfade between images, in seconds. Zero gives hard cuts.
+    /// Dissolve between images. When off, images change with a hard cut.
+    public var crossfadeEnabled: Bool = true
+    /// Length of the crossfade between images, in seconds, when `crossfadeEnabled` is on.
     public var crossfadeSeconds: Double = 0.5
     /// Apply gray-world white balance to every image, like the command-line tool.
     public var colorBalance: Bool = true
@@ -98,7 +100,21 @@ public struct ExportSettings: Codable, Equatable, Sendable {
 
     public init() {}
 
+    // Decode field by field so settings saved by older versions still load.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = ExportSettings()
+        outputKind = try container.decodeIfPresent(OutputKind.self, forKey: .outputKind) ?? defaults.outputKind
+        resolution = try container.decodeIfPresent(Resolution.self, forKey: .resolution) ?? defaults.resolution
+        frameRate = try container.decodeIfPresent(Int.self, forKey: .frameRate) ?? defaults.frameRate
+        secondsPerImage = try container.decodeIfPresent(Double.self, forKey: .secondsPerImage) ?? defaults.secondsPerImage
+        crossfadeEnabled = try container.decodeIfPresent(Bool.self, forKey: .crossfadeEnabled) ?? defaults.crossfadeEnabled
+        crossfadeSeconds = try container.decodeIfPresent(Double.self, forKey: .crossfadeSeconds) ?? defaults.crossfadeSeconds
+        colorBalance = try container.decodeIfPresent(Bool.self, forKey: .colorBalance) ?? defaults.colorBalance
+        codec = try container.decodeIfPresent(VideoCodec.self, forKey: .codec) ?? defaults.codec
+    }
+
     public var timing: FrameTiming {
-        FrameTiming(frameRate: frameRate, secondsPerImage: secondsPerImage, crossfadeSeconds: crossfadeSeconds)
+        FrameTiming(frameRate: frameRate, secondsPerImage: secondsPerImage, crossfadeSeconds: crossfadeEnabled ? crossfadeSeconds : 0)
     }
 }

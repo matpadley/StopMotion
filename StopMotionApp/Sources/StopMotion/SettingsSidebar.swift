@@ -44,11 +44,17 @@ struct SettingsSidebar: View {
                         }
                     }
 
-                    Stepper(value: crossfadeFrames, in: 0...max(0, model.settings.timing.framesPerImage - 1)) {
-                        LabeledContent("Crossfade") {
-                            Text(model.settings.timing.crossfadeFrames == 0 ? "Cut" : frameDescription(model.settings.timing.crossfadeFrames))
-                                .monospacedDigit()
+                    Toggle("Cross dissolve between images", isOn: $model.settings.crossfadeEnabled)
+                        .disabled(model.settings.timing.framesPerImage < 2)
+
+                    if model.settings.crossfadeEnabled {
+                        Stepper(value: crossfadeFrames, in: 1...max(1, model.settings.timing.framesPerImage - 1)) {
+                            LabeledContent("Dissolve length") {
+                                Text(frameDescription(model.settings.timing.crossfadeFrames))
+                                    .monospacedDigit()
+                            }
                         }
+                        .disabled(model.settings.timing.framesPerImage < 2)
                     }
                 } header: {
                     HStack {
@@ -81,7 +87,7 @@ struct SettingsSidebar: View {
                         }
                     }
                     if model.settings.outputKind.includesFinalCutPro {
-                        Text("In Final Cut Pro choose File ▸ Import ▸ XML… and pick the .fcpxml file. Stills are placed on the timeline with Cross Dissolves.")
+                        Text("In Final Cut Pro choose File ▸ Import ▸ XML… and pick the .fcpxml file. Stills are placed on the timeline, with Cross Dissolves if turned on.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
