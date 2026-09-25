@@ -172,3 +172,7 @@ OpenCover/
 .build/
 .swiftpm/
 StopMotionApp/build/
+
+# Xcode
+xcuserdata/
+DerivedData/

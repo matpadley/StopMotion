@@ -1,0 +1,41 @@
+# XcodeGen spec for StopMotion.xcodeproj.
+# Regenerate after adding/removing files: `cd StopMotionApp && xcodegen generate`
+# Mirrors Package.swift: StopMotionKit (rendering + FCPXML export) and the StopMotion SwiftUI app.
+name: StopMotion
+options:
+  bundleIdPrefix: com.matpadley
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+targets:
+  StopMotionKit:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Sources/StopMotionKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.matpadley.StopMotionKit
+        GENERATE_INFOPLIST_FILE: YES
+        DEFINES_MODULE: YES
+  StopMotion:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/StopMotion
+    dependencies:
+      - target: StopMotionKit
+    settings:
+      base:
+        PRODUCT_NAME: StopMotion
+        PRODUCT_BUNDLE_IDENTIFIER: com.matpadley.StopMotion
+        INFOPLIST_FILE: Support/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES

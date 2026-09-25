@@ -5,7 +5,7 @@ architecture details of the .NET tool.
 
 ## Repository layout
 
-- `ImageConcat/` – .NET 8 console app (`ImgConcat`) that builds an MP4 and/or a Final Cut Pro
+- `ImageConcat/` – .NET 10 console app (`ImgConcat`) that builds an MP4 and/or a Final Cut Pro
   project (FCPXML) from a folder of images.
 - `ImgConcat.Tests/` – NUnit tests for the .NET app.
 - `StopMotionApp/` – SwiftUI macOS app (Swift package: `StopMotionKit` library + `StopMotion` app).
@@ -15,6 +15,8 @@ architecture details of the .NET tool.
 
 - .NET build/test: `dotnet build ImgConcat.sln` / `dotnet test ImgConcat.Tests/ImgConcat.Tests.csproj`
 - Swift (macOS 14+ only): `cd StopMotionApp && swift build`; `scripts/build-app.sh` builds the `.app`.
+- Xcode project: `StopMotionApp/StopMotion.xcodeproj` is generated from `StopMotionApp/project.yml` with
+  XcodeGen. Don't hand-edit it; after adding/removing Swift files run `cd StopMotionApp && xcodegen generate`.
 
 ## C# conventions
 
